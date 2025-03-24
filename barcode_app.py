@@ -97,11 +97,11 @@ if uploaded_file:
 
         elif output_option == "PDF mit formatierten Barcodes":
             pdf_buffer = BytesIO()
-            c = canvas.Canvas(pdf_buffer, pagesize=A4)  # Hochformat
+            c = canvas.Canvas(pdf_buffer, pagesize=A4)
             width, height = A4
 
-            x_margin = 20 * mm
-            y_margin = 20 * mm
+            x_margin = 15 * mm
+            y_margin = 15 * mm
             x = x_margin
             y = height - y_margin
             line_height = 20 * mm
@@ -109,8 +109,9 @@ if uploaded_file:
             line_count = 0
 
             def draw_header():
-                c.setFont("Helvetica-Bold", 12)
-                c.drawString(x, y, "Markt    Art-Nr    Art-Bez    Menge    ME    Wert    VK-Wert    Spanne    EK/VK    GLD    Barcode")
+                c.setFont("Helvetica-Bold", 11)
+                c.drawString(x, y, "Markt    Art-Nr    Art-Bez    Menge    ME    Wert    VK-Wert    Spanne    EK/VK    GLD")
+                c.drawString(x + 140 * mm, y, "Barcode")
 
             draw_header()
             y -= line_height
@@ -124,13 +125,13 @@ if uploaded_file:
                     y -= line_height
                     line_count = 1
 
-                c.setFont("Helvetica", 9)
+                c.setFont("Helvetica", 8)
                 text = f'{row["Markt"]}    {row["Art-Nr"]}    {row["Art-Bez"]}    {row["Menge"]}    {row["ME"]}    {row["Wert"]}    {row["VK-Wert"]}    {row["Spanne"]}    {row["EK/VK"]}    {row["GLD"]}'
                 c.drawString(x, y, text)
 
-                # Breiterer Barcode im Hochformat
+                # Barcode rechts platzieren
                 barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=12 * mm, barWidth=0.55)
-                barcode.drawOn(c, x + 115 * mm, y - 2)
+                barcode.drawOn(c, x + 140 * mm, y - 2)
 
                 y -= line_height
                 line_count += 1
