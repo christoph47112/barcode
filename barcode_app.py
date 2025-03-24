@@ -17,7 +17,7 @@ uploaded_file = st.file_uploader("Lade eine Excel-Datei hoch (.xlsx)", type=["xl
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Entferne unerwünschte Spalten, falls vorhanden
+    # Entferne unerwünschte Spalten
     spalten_zum_entfernen = ["MTART", "Abt.", "WGR", "WGR-Bezeichnung", "Wertart."]
     df = df.drop(columns=[s for s in spalten_zum_entfernen if s in df.columns])
 
@@ -29,23 +29,23 @@ if uploaded_file:
         ws = wb.active
         ws.title = "Artikelliste mit Barcode"
 
-        # Tabelle einfügen mit fett formatierter Kopfzeile
+        # Tabelleninhalt + fette Überschrift einfügen
         for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
             for c_idx, value in enumerate(row, 1):
                 cell = ws.cell(row=r_idx, column=c_idx, value=value)
                 if r_idx == 1:
                     cell.font = Font(bold=True)
 
-        # Barcodes generieren und in Spalte K einfügen
+        # Barcodes generieren und rechts daneben einfügen
         for i, art_nr in enumerate(df["Art-Nr"].astype(str), start=2):
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_img:
                 Code128(
                     art_nr,
                     writer=ImageWriter()
                 ).write(tmp_img, options={
-                    "module_width": 0.5,   # schmaler (wie im PDF)
-                    "module_height": 15,    # flacher (wie im PDF)
-                    "text_distance": 0,     # verhindert Font-Fehler
+                    "module_width": 0.25,   # schmal (wie in PDF)
+                    "module_height": 10,    # flach
+                    "text_distance": 0,     # kein Text unter Barcode
                     "quiet_zone": 1         # schmaler Rand
                 })
                 tmp_img.close()
@@ -54,9 +54,10 @@ if uploaded_file:
                 img.height = 30
                 ws.add_image(img, f"K{i}")
 
+        # Spalte für Barcode etwas breiter
         ws.column_dimensions["K"].width = 22
 
-        # Speichern in Memory-Datei
+        # Ergebnis als Download anbieten
         output = BytesIO()
         wb.save(output)
         output.seek(0)
