@@ -20,10 +20,8 @@ st.title("📦 Artikelliste mit Code128-Barcodes")
 def encode_code128(text):
     return chr(204) + text + chr(206)
 
-# Datei-Upload
 uploaded_file = st.file_uploader("Lade eine Excel-Datei hoch (.xlsx)", type=["xlsx"])
 
-# Ausgabeformat wählen
 output_option = st.radio("📤 Wähle Ausgabeformat:", [
     "Excel mit Barcode-Bild",
     "Excel mit Barcode-Text (für Code128-Schrift)",
@@ -98,9 +96,10 @@ if uploaded_file:
             )
 
         elif output_option == "PDF mit formatierten Barcodes":
-            buffer = BytesIO()
-            c = canvas.Canvas(buffer, pagesize=landscape(A4))
+            pdf_buffer = BytesIO()
+            c = canvas.Canvas(pdf_buffer, pagesize=landscape(A4))
             width, height = landscape(A4)
+
             x_margin = 20 * mm
             y_margin = 20 * mm
             x = x_margin
@@ -109,26 +108,39 @@ if uploaded_file:
             max_lines_per_page = int((height - 2 * y_margin) // line_height)
             line_count = 0
 
+            def draw_header():
+                c.setFont("Helvetica-Bold", 12)
+                c.drawString(x, y, "Markt    Art-Nr    Art-Bez    Menge    ME    Wert    VK-Wert    Spanne    EK/VK    GLD    Barcode")
+
+            draw_header()
+            y -= line_height
+            line_count += 1
+
             for index, row in df.iterrows():
                 if line_count >= max_lines_per_page:
                     c.showPage()
                     y = height - y_margin
-                    line_count = 0
-                art_nr = str(row["Art-Nr"])
-                art_bez = row["Art-Bez"]
-                barcode = rl_code128.Code128(art_nr, barHeight=15 * mm, barWidth=0.4)
-                barcode.drawOn(c, x, y - 15 * mm)
-                c.setFont("Helvetica", 10)
-                c.drawString(x + 80 * mm, y - 5 * mm, f"{art_nr} | {art_bez}")
+                    draw_header()
+                    y -= line_height
+                    line_count = 1
+
+                c.setFont("Helvetica", 9)
+                text = f'{row["Markt"]}    {row["Art-Nr"]}    {row["Art-Bez"]}    {row["Menge"]}    {row["ME"]}    {row["Wert"]}    {row["VK-Wert"]}    {row["Spanne"]}    {row["EK/VK"]}    {row["GLD"]}'
+                c.drawString(x, y, text)
+
+                # Breiterer Barcode
+                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=12 * mm, barWidth=0.55)
+                barcode.drawOn(c, x + 160 * mm, y - 2)
+
                 y -= line_height
                 line_count += 1
 
             c.save()
-            buffer.seek(0)
+            pdf_buffer.seek(0)
 
             st.download_button(
-                label="📥 PDF mit formatierten Barcodes herunterladen",
-                data=buffer,
+                label="📥 PDF mit Barcodes herunterladen",
+                data=pdf_buffer,
                 file_name="Artikelliste_mit_Barcodes.pdf",
                 mime="application/pdf"
             )
