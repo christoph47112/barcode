@@ -95,7 +95,7 @@ if uploaded_file:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-                elif output_option == "PDF mit formatierten Barcodes":
+        elif output_option == "PDF mit formatierten Barcodes":
             pdf_buffer = BytesIO()
             c = canvas.Canvas(pdf_buffer, pagesize=A4)
             width, height = A4
