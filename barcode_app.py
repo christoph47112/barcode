@@ -8,7 +8,7 @@ from openpyxl.drawing.image import Image as XLImage
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import landscape, A4
 from reportlab.graphics.barcode import code128 as rl_code128
 from reportlab.lib.units import mm
 import tempfile
@@ -25,7 +25,7 @@ uploaded_file = st.file_uploader("Lade eine Excel-Datei hoch (.xlsx)", type=["xl
 output_option = st.radio("📤 Wähle Ausgabeformat:", [
     "Excel mit Barcode-Bild",
     "Excel mit Barcode-Text (für Code128-Schrift)",
-    "PDF mit formatierten Barcodes (tabellarisch)"
+    "PDF mit Barcodes (Querformat, tabellarisch)"
 ])
 
 if uploaded_file:
@@ -95,32 +95,32 @@ if uploaded_file:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-        elif output_option == "PDF mit formatierten Barcodes (tabellarisch)":
+        elif output_option == "PDF mit Barcodes (Querformat, tabellarisch)":
             pdf_buffer = BytesIO()
-            c = canvas.Canvas(pdf_buffer, pagesize=A4)
-            width, height = A4
+            c = canvas.Canvas(pdf_buffer, pagesize=landscape(A4))
+            width, height = landscape(A4)
 
             x_margin = 10 * mm
             y_margin = 15 * mm
             x = x_margin
             y = height - y_margin
-            line_height = 18 * mm
+            line_height = 20 * mm
             max_lines_per_page = int((height - 2 * y_margin) // line_height)
             line_count = 0
 
-            # Spaltenpositionen
+            # Spaltenpositionen (angepasst für Querformat)
             col_pos = {
                 "Markt": x + 0 * mm,
                 "Art-Nr": x + 20 * mm,
                 "Art-Bez": x + 45 * mm,
-                "Menge": x + 105 * mm,
-                "ME": x + 115 * mm,
-                "Wert": x + 125 * mm,
-                "VK-Wert": x + 140 * mm,
-                "Spanne": x + 160 * mm,
-                "EK/VK": x + 180 * mm,
-                "GLD": x + 195 * mm,
-                "Barcode": x + 210 * mm
+                "Menge": x + 110 * mm,
+                "ME": x + 120 * mm,
+                "Wert": x + 130 * mm,
+                "VK-Wert": x + 145 * mm,
+                "Spanne": x + 165 * mm,
+                "EK/VK": x + 185 * mm,
+                "GLD": x + 205 * mm,
+                "Barcode": x + 225 * mm
             }
 
             def draw_header():
@@ -144,7 +144,7 @@ if uploaded_file:
                 c.drawString(col_pos["Markt"], y, str(row["Markt"]))
                 c.drawString(col_pos["Art-Nr"], y, str(row["Art-Nr"]))
                 c.drawString(col_pos["Art-Bez"], y, str(row["Art-Bez"])[:60])
-                c.drawRightString(col_pos["Menge"] + 10, y, str(row["Menge"]))
+                c.drawRightString(col_pos["Menge"] + 8, y, str(row["Menge"]))
                 c.drawString(col_pos["ME"], y, str(row["ME"]))
                 c.drawRightString(col_pos["Wert"] + 10, y, f'{row["Wert"]:.2f}')
                 c.drawRightString(col_pos["VK-Wert"] + 10, y, f'{row["VK-Wert"]:.2f}')
@@ -152,7 +152,8 @@ if uploaded_file:
                 c.drawRightString(col_pos["EK/VK"] + 10, y, f'{row["EK/VK"]:.3f}')
                 c.drawRightString(col_pos["GLD"] + 10, y, f'{row["GLD"]:.2f}')
 
-                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=11 * mm, barWidth=0.55)
+                # Barcode sichtbar und rechts
+                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=12 * mm, barWidth=0.5)
                 barcode.drawOn(c, col_pos["Barcode"], y - 2)
 
                 y -= line_height
