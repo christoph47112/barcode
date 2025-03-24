@@ -95,7 +95,7 @@ if uploaded_file:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-        elif output_option == "PDF mit formatierten Barcodes":
+                elif output_option == "PDF mit formatierten Barcodes":
             pdf_buffer = BytesIO()
             c = canvas.Canvas(pdf_buffer, pagesize=A4)
             width, height = A4
@@ -104,14 +104,13 @@ if uploaded_file:
             y_margin = 15 * mm
             x = x_margin
             y = height - y_margin
-            line_height = 20 * mm
+            line_height = 18 * mm
             max_lines_per_page = int((height - 2 * y_margin) // line_height)
             line_count = 0
 
             def draw_header():
-                c.setFont("Helvetica-Bold", 11)
-                c.drawString(x, y, "Markt    Art-Nr    Art-Bez    Menge    ME    Wert    VK-Wert    Spanne    EK/VK    GLD")
-                c.drawString(x + 140 * mm, y, "Barcode")
+                c.setFont("Helvetica-Bold", 8)
+                c.drawString(x, y, "Markt    Art-Nr        Art-Bez                             Menge  ME   Wert    VK-Wert  Spanne  EK/VK  GLD   Barcode")
 
             draw_header()
             y -= line_height
@@ -125,13 +124,13 @@ if uploaded_file:
                     y -= line_height
                     line_count = 1
 
-                c.setFont("Helvetica", 8)
-                text = f'{row["Markt"]}    {row["Art-Nr"]}    {row["Art-Bez"]}    {row["Menge"]}    {row["ME"]}    {row["Wert"]}    {row["VK-Wert"]}    {row["Spanne"]}    {row["EK/VK"]}    {row["GLD"]}'
+                c.setFont("Helvetica", 7)
+                text = f'{str(row["Markt"]):<7}  {str(row["Art-Nr"]):<10}  {str(row["Art-Bez"]):<35}  {str(row["Menge"]).rjust(5)}  {str(row["ME"]):<3}  {str(row["Wert"]).rjust(6)}  {str(row["VK-Wert"]).rjust(7)}  {str(row["Spanne"]).rjust(7)}  {str(row["EK/VK"]).rjust(5)}  {str(row["GLD"]).rjust(5)}'
                 c.drawString(x, y, text)
 
-                # Barcode rechts platzieren
-                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=12 * mm, barWidth=0.55)
-                barcode.drawOn(c, x + 140 * mm, y - 2)
+                # Barcode ganz rechts
+                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=11 * mm, barWidth=0.55)
+                barcode.drawOn(c, x + 150 * mm, y - 2)
 
                 y -= line_height
                 line_count += 1
