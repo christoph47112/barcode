@@ -14,15 +14,15 @@ from reportlab.lib.units import mm
 import tempfile
 import os
 
-st.set_page_config(page_title="Barcodes erstellen", layout="wide")
-st.title("📦 Artikelliste mit Code128-Barcodes")
+st.set_page_config(page_title="Selektive Inventurhilfe", layout="wide")
+st.title("📦 Selektive Inventurhilfe")
 
 def encode_code128(text):
     return chr(204) + text + chr(206)
 
-uploaded_file = st.file_uploader("Lade eine Excel-Datei hoch (.xlsx)", type=["xlsx"])
+uploaded_file = st.file_uploader("Laden Sie Ihre Bestandsübersicht-Datei hoch (.xlsx)", type=["xlsx"])
 
-output_option = st.radio("📤 Wähle Ausgabeformat:", [
+output_option = st.radio("📤 Wählen Sie das Ausgabeformat:", [
     "Excel mit Barcode-Bild",
     "Excel mit Barcode-Text (für Code128-Schrift)",
     "PDF mit Barcodes (wählbares Format)"
@@ -30,7 +30,7 @@ output_option = st.radio("📤 Wähle Ausgabeformat:", [
 
 pdf_layout = None
 if output_option == "PDF mit Barcodes (wählbares Format)":
-    pdf_layout = st.radio("📐 Seitenlayout für PDF:", ["Hochformat", "Querformat"])
+    pdf_layout = st.radio("📐 Seitenlayout für PDF:", ["Querformat", "Hochformat"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
@@ -72,7 +72,7 @@ if uploaded_file:
             st.download_button(
                 label="📥 Excel mit Barcode-Bild herunterladen",
                 data=output,
-                file_name="Artikelliste_mit_Barcodebildern.xlsx",
+                file_name="Bestandsliste_mit_Barcodebildern.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
@@ -93,7 +93,7 @@ if uploaded_file:
             st.download_button(
                 label="📥 Excel mit Barcode-Text herunterladen",
                 data=output,
-                file_name="Artikelliste_mit_Barcodetext.xlsx",
+                file_name="Bestandsliste_mit_Barcodetext.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
@@ -177,6 +177,6 @@ if uploaded_file:
             st.download_button(
                 label=f"📥 PDF ({pdf_layout}) herunterladen",
                 data=pdf_buffer,
-                file_name=f"Artikelliste_Barcodes_{pdf_layout}.pdf",
+                file_name=f"Bestandsliste_Barcodes_{pdf_layout}.pdf",
                 mime="application/pdf"
             )
