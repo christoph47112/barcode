@@ -43,9 +43,9 @@ if uploaded_file:
                     art_nr,
                     writer=ImageWriter()
                 ).write(tmp_img, options={
-                    "module_width": 0.25,   # schmaler (wie in PDF)
-                    "module_height": 10,    # flacher (wie in PDF)
-                    "font_size": 0,         # kein Text
+                    "module_width": 0.5,   # schmaler (wie im PDF)
+                    "module_height": 15,    # flacher (wie im PDF)
+                    "text_distance": 0,     # verhindert Font-Fehler
                     "quiet_zone": 1         # schmaler Rand
                 })
                 tmp_img.close()
