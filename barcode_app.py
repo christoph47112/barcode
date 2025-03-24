@@ -14,20 +14,50 @@ from reportlab.lib.units import mm
 import tempfile
 import os
 
-st.set_page_config(page_title="Selektive Inventurhilfe", layout="wide")
+st.set_page_config(page_title="Barcodes erstellen", layout="wide")
 st.title("📦 Selektive Inventurhilfe")
 
-def encode_code128(text):
-    return chr(204) + text + chr(206)
+# 📝 Anleitung zur Dateigenerierung aus RWWS
+with st.expander("ℹ️ Anleitung: Datei aus RWWS exportieren"):
+    st.markdown("""
+### 📄 So exportieren Sie Ihre Bestandsübersicht aus RWWS
 
+#### 🔍 1. RWWS öffnen:
+Gehen Sie im **RWWS** zu:  
+`Logistik > Warenbewegungen > Operative Listen > Bestandsübersicht`
+
+#### 📦 2. Selektion einstellen:
+- Unter **„Einfache Selektion“**:
+  - Warengruppe: **52** (für Pflanzen)
+
+- Unter **„Erweiterte Selektion“**:
+  - Beim Feld **„Gesamtwert (EK)“** klicken Sie auf die **weiße Raute (◇)**
+  - Wählen Sie den **Operator „≠“ (ungleich)**
+  - Geben Sie den Wert **0** ein
+
+#### 📤 3. Exportieren:
+- Klicken Sie auf **„Daten Anzeigen“**
+- Danach auf **„Export“**
+- Wählen Sie **Export nach Excel** und speichern Sie die Datei auf Ihrem PC
+
+#### 📥 4. In die App hochladen:
+- Diese Anwendung Aufrufen
+- Klicken Sie auf **„Laden Sie Ihre Bestandsübersicht-Datei hoch (.xlsx)”**
+- Wählen Sie Ihre gespeicherte Datei aus
+- Die Datei wird automatisch eingelesen und weiterverarbeitet
+""")
+
+# 📁 Datei-Upload
 uploaded_file = st.file_uploader("Laden Sie Ihre Bestandsübersicht-Datei hoch (.xlsx)", type=["xlsx"])
 
+# 📤 Ausgabeformat wählen
 output_option = st.radio("📤 Wählen Sie das Ausgabeformat:", [
     "Excel mit Barcode-Bild",
     "Excel mit Barcode-Text (für Code128-Schrift)",
     "PDF mit Barcodes (wählbares Format)"
 ])
 
+# 📐 Layoutoption (nur für PDF)
 pdf_layout = None
 if output_option == "PDF mit Barcodes (wählbares Format)":
     pdf_layout = st.radio("📐 Seitenlayout für PDF:", ["Querformat", "Hochformat"])
@@ -38,10 +68,13 @@ if uploaded_file:
     spalten_zum_entfernen = ["MTART", "Abt.", "WGR", "WGR-Bezeichnung", "Wertart."]
     df = df.drop(columns=[s for s in spalten_zum_entfernen if s in df.columns])
 
-    st.success("✅ Datei geladen:")
+    st.success("✅ Datei erfolgreich geladen.")
     st.dataframe(df.head())
 
     if st.button("🚀 Datei erzeugen"):
+        def encode_code128(text):
+            return chr(204) + text + chr(206)
+
         if output_option == "Excel mit Barcode-Bild":
             wb = Workbook()
             ws = wb.active
@@ -98,7 +131,6 @@ if uploaded_file:
             )
 
         elif output_option == "PDF mit Barcodes (wählbares Format)":
-            # Layoutwahl berücksichtigen
             if pdf_layout == "Querformat":
                 page_size = landscape(A4)
                 barcode_width = 0.5
@@ -120,7 +152,6 @@ if uploaded_file:
             max_lines_per_page = int((height - 2 * y_margin) // line_height)
             line_count = 0
 
-            # Spaltenpositionen (angepasst für beide Formate)
             col_pos = {
                 "Markt": x + 0 * mm,
                 "Art-Nr": x + 20 * mm,
