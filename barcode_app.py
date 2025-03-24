@@ -8,7 +8,7 @@ from openpyxl.drawing.image import Image as XLImage
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.pagesizes import A4
 from reportlab.graphics.barcode import code128 as rl_code128
 from reportlab.lib.units import mm
 import tempfile
@@ -97,8 +97,8 @@ if uploaded_file:
 
         elif output_option == "PDF mit formatierten Barcodes":
             pdf_buffer = BytesIO()
-            c = canvas.Canvas(pdf_buffer, pagesize=landscape(A4))
-            width, height = landscape(A4)
+            c = canvas.Canvas(pdf_buffer, pagesize=A4)  # Hochformat
+            width, height = A4
 
             x_margin = 20 * mm
             y_margin = 20 * mm
@@ -128,9 +128,9 @@ if uploaded_file:
                 text = f'{row["Markt"]}    {row["Art-Nr"]}    {row["Art-Bez"]}    {row["Menge"]}    {row["ME"]}    {row["Wert"]}    {row["VK-Wert"]}    {row["Spanne"]}    {row["EK/VK"]}    {row["GLD"]}'
                 c.drawString(x, y, text)
 
-                # Breiterer Barcode
+                # Breiterer Barcode im Hochformat
                 barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=12 * mm, barWidth=0.55)
-                barcode.drawOn(c, x + 160 * mm, y - 2)
+                barcode.drawOn(c, x + 115 * mm, y - 2)
 
                 y -= line_height
                 line_count += 1
