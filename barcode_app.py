@@ -25,7 +25,7 @@ uploaded_file = st.file_uploader("Lade eine Excel-Datei hoch (.xlsx)", type=["xl
 output_option = st.radio("📤 Wähle Ausgabeformat:", [
     "Excel mit Barcode-Bild",
     "Excel mit Barcode-Text (für Code128-Schrift)",
-    "PDF mit formatierten Barcodes"
+    "PDF mit formatierten Barcodes (tabellarisch)"
 ])
 
 if uploaded_file:
@@ -95,12 +95,12 @@ if uploaded_file:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-        elif output_option == "PDF mit formatierten Barcodes":
+        elif output_option == "PDF mit formatierten Barcodes (tabellarisch)":
             pdf_buffer = BytesIO()
             c = canvas.Canvas(pdf_buffer, pagesize=A4)
             width, height = A4
 
-            x_margin = 15 * mm
+            x_margin = 10 * mm
             y_margin = 15 * mm
             x = x_margin
             y = height - y_margin
@@ -108,15 +108,31 @@ if uploaded_file:
             max_lines_per_page = int((height - 2 * y_margin) // line_height)
             line_count = 0
 
+            # Spaltenpositionen
+            col_pos = {
+                "Markt": x + 0 * mm,
+                "Art-Nr": x + 20 * mm,
+                "Art-Bez": x + 45 * mm,
+                "Menge": x + 105 * mm,
+                "ME": x + 115 * mm,
+                "Wert": x + 125 * mm,
+                "VK-Wert": x + 140 * mm,
+                "Spanne": x + 160 * mm,
+                "EK/VK": x + 180 * mm,
+                "GLD": x + 195 * mm,
+                "Barcode": x + 210 * mm
+            }
+
             def draw_header():
                 c.setFont("Helvetica-Bold", 8)
-                c.drawString(x, y, "Markt    Art-Nr        Art-Bez                             Menge  ME   Wert    VK-Wert  Spanne  EK/VK  GLD   Barcode")
+                for key, xpos in col_pos.items():
+                    c.drawString(xpos, y, key)
 
             draw_header()
             y -= line_height
             line_count += 1
 
-            for index, row in df.iterrows():
+            for _, row in df.iterrows():
                 if line_count >= max_lines_per_page:
                     c.showPage()
                     y = height - y_margin
@@ -125,12 +141,19 @@ if uploaded_file:
                     line_count = 1
 
                 c.setFont("Helvetica", 7)
-                text = f'{str(row["Markt"]):<7}  {str(row["Art-Nr"]):<10}  {str(row["Art-Bez"]):<35}  {str(row["Menge"]).rjust(5)}  {str(row["ME"]):<3}  {str(row["Wert"]).rjust(6)}  {str(row["VK-Wert"]).rjust(7)}  {str(row["Spanne"]).rjust(7)}  {str(row["EK/VK"]).rjust(5)}  {str(row["GLD"]).rjust(5)}'
-                c.drawString(x, y, text)
+                c.drawString(col_pos["Markt"], y, str(row["Markt"]))
+                c.drawString(col_pos["Art-Nr"], y, str(row["Art-Nr"]))
+                c.drawString(col_pos["Art-Bez"], y, str(row["Art-Bez"])[:60])
+                c.drawRightString(col_pos["Menge"] + 10, y, str(row["Menge"]))
+                c.drawString(col_pos["ME"], y, str(row["ME"]))
+                c.drawRightString(col_pos["Wert"] + 10, y, f'{row["Wert"]:.2f}')
+                c.drawRightString(col_pos["VK-Wert"] + 10, y, f'{row["VK-Wert"]:.2f}')
+                c.drawRightString(col_pos["Spanne"] + 10, y, f'{row["Spanne"]:.2f}')
+                c.drawRightString(col_pos["EK/VK"] + 10, y, f'{row["EK/VK"]:.3f}')
+                c.drawRightString(col_pos["GLD"] + 10, y, f'{row["GLD"]:.2f}')
 
-                # Barcode ganz rechts
                 barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=11 * mm, barWidth=0.55)
-                barcode.drawOn(c, x + 150 * mm, y - 2)
+                barcode.drawOn(c, col_pos["Barcode"], y - 2)
 
                 y -= line_height
                 line_count += 1
