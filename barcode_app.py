@@ -8,7 +8,7 @@ from openpyxl.drawing.image import Image as XLImage
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.graphics.barcode import code128 as rl_code128
 from reportlab.lib.units import mm
 import tempfile
@@ -25,13 +25,16 @@ uploaded_file = st.file_uploader("Lade eine Excel-Datei hoch (.xlsx)", type=["xl
 output_option = st.radio("📤 Wähle Ausgabeformat:", [
     "Excel mit Barcode-Bild",
     "Excel mit Barcode-Text (für Code128-Schrift)",
-    "PDF mit Barcodes (Querformat, tabellarisch)"
+    "PDF mit Barcodes (wählbares Format)"
 ])
+
+pdf_layout = None
+if output_option == "PDF mit Barcodes (wählbares Format)":
+    pdf_layout = st.radio("📐 Seitenlayout für PDF:", ["Hochformat", "Querformat"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Unerwünschte Spalten entfernen
     spalten_zum_entfernen = ["MTART", "Abt.", "WGR", "WGR-Bezeichnung", "Wertart."]
     df = df.drop(columns=[s for s in spalten_zum_entfernen if s in df.columns])
 
@@ -48,7 +51,6 @@ if uploaded_file:
                     cell = ws.cell(row=r_idx, column=c_idx, value=value)
                     if r_idx == 1:
                         cell.font = Font(bold=True)
-
             for i, art_nr in enumerate(df["Art-Nr"].astype(str), start=2):
                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_img:
                     Code128(art_nr, writer=ImageWriter()).write(tmp_img, options={
@@ -95,10 +97,20 @@ if uploaded_file:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-        elif output_option == "PDF mit Barcodes (Querformat, tabellarisch)":
+        elif output_option == "PDF mit Barcodes (wählbares Format)":
+            # Layoutwahl berücksichtigen
+            if pdf_layout == "Querformat":
+                page_size = landscape(A4)
+                barcode_width = 0.5
+                barcode_x_offset = 225 * mm
+            else:
+                page_size = A4
+                barcode_width = 0.35
+                barcode_x_offset = 145 * mm
+
             pdf_buffer = BytesIO()
-            c = canvas.Canvas(pdf_buffer, pagesize=landscape(A4))
-            width, height = landscape(A4)
+            c = canvas.Canvas(pdf_buffer, pagesize=page_size)
+            width, height = page_size
 
             x_margin = 10 * mm
             y_margin = 15 * mm
@@ -108,25 +120,26 @@ if uploaded_file:
             max_lines_per_page = int((height - 2 * y_margin) // line_height)
             line_count = 0
 
-            # Spaltenpositionen (angepasst für Querformat)
+            # Spaltenpositionen (angepasst für beide Formate)
             col_pos = {
                 "Markt": x + 0 * mm,
                 "Art-Nr": x + 20 * mm,
                 "Art-Bez": x + 45 * mm,
-                "Menge": x + 110 * mm,
-                "ME": x + 120 * mm,
-                "Wert": x + 130 * mm,
-                "VK-Wert": x + 145 * mm,
-                "Spanne": x + 165 * mm,
-                "EK/VK": x + 185 * mm,
-                "GLD": x + 205 * mm,
-                "Barcode": x + 225 * mm
+                "Menge": x + 100 * mm,
+                "ME": x + 110 * mm,
+                "Wert": x + 120 * mm,
+                "VK-Wert": x + 135 * mm,
+                "Spanne": x + 155 * mm,
+                "EK/VK": x + 175 * mm,
+                "GLD": x + 190 * mm,
+                "Barcode": barcode_x_offset
             }
 
             def draw_header():
                 c.setFont("Helvetica-Bold", 8)
                 for key, xpos in col_pos.items():
-                    c.drawString(xpos, y, key)
+                    if key != "Barcode":
+                        c.drawString(xpos, y, key)
 
             draw_header()
             y -= line_height
@@ -143,7 +156,7 @@ if uploaded_file:
                 c.setFont("Helvetica", 7)
                 c.drawString(col_pos["Markt"], y, str(row["Markt"]))
                 c.drawString(col_pos["Art-Nr"], y, str(row["Art-Nr"]))
-                c.drawString(col_pos["Art-Bez"], y, str(row["Art-Bez"])[:60])
+                c.drawString(col_pos["Art-Bez"], y, str(row["Art-Bez"])[:50])
                 c.drawRightString(col_pos["Menge"] + 8, y, str(row["Menge"]))
                 c.drawString(col_pos["ME"], y, str(row["ME"]))
                 c.drawRightString(col_pos["Wert"] + 10, y, f'{row["Wert"]:.2f}')
@@ -152,8 +165,7 @@ if uploaded_file:
                 c.drawRightString(col_pos["EK/VK"] + 10, y, f'{row["EK/VK"]:.3f}')
                 c.drawRightString(col_pos["GLD"] + 10, y, f'{row["GLD"]:.2f}')
 
-                # Barcode sichtbar und rechts
-                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=12 * mm, barWidth=0.5)
+                barcode = rl_code128.Code128(str(row["Art-Nr"]), barHeight=11 * mm, barWidth=barcode_width)
                 barcode.drawOn(c, col_pos["Barcode"], y - 2)
 
                 y -= line_height
@@ -163,8 +175,8 @@ if uploaded_file:
             pdf_buffer.seek(0)
 
             st.download_button(
-                label="📥 PDF mit Barcodes herunterladen",
+                label=f"📥 PDF ({pdf_layout}) herunterladen",
                 data=pdf_buffer,
-                file_name="Artikelliste_mit_Barcodes.pdf",
+                file_name=f"Artikelliste_Barcodes_{pdf_layout}.pdf",
                 mime="application/pdf"
             )
