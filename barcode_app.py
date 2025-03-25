@@ -18,7 +18,7 @@ st.set_page_config(page_title="Barcodes erstellen", layout="wide")
 st.title("📦 Selektive Inventurhilfe")
 
 # 📝 Anleitung zur Dateigenerierung aus RWWS
-with st.expander("ℹ️ Anleitung: Datei aus RWWS exportieren"):
+with st.expander("ℹ️ Anleitung: Datei aus dem RWWS exportieren"):
     st.markdown("""
 ### 📄 So exportieren Sie Ihre Bestandsübersicht aus RWWS
 
