@@ -215,7 +215,7 @@ if uploaded_file:
 # Footer Hinweis
 st.markdown("""
 ---
-Canvas ⚠️ Hinweis: Diese Anwendung speichert keine Daten und hat keinen Zugriff auf Ihre Dateien.
+⚠️ Hinweis: Diese Anwendung speichert keine Daten und hat keinen Zugriff auf Ihre Dateien.
 
 🌟 *Erstellt von Christoph R. Kaiser mit Hilfe von Künstlicher Intelligenz.*
 """)
