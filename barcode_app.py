@@ -211,3 +211,11 @@ if uploaded_file:
                 file_name=f"Bestandsliste_Barcodes_{pdf_layout}.pdf",
                 mime="application/pdf"
             )
+
+# Footer Hinweis
+st.markdown("""
+---
+Canvas ⚠️ Hinweis: Diese Anwendung speichert keine Daten und hat keinen Zugriff auf Ihre Dateien.
+
+🌟 *Erstellt von Christoph R. Kaiser mit Hilfe von Künstlicher Intelligenz.*
+""")
